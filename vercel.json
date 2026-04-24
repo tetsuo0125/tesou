@@ -1,17 +1,18 @@
 {
   "functions": {
-    "api/analyze.js": {
-      "maxDuration": 30
+    "api/*.js": {
+      "maxDuration": 30,
+      "memory": 1024
     }
   },
-  "routes": [
+  "rewrites": [
     {
-      "src": "/api/(.*)",
-      "dest": "/api/$1"
+      "source": "/api/(.*)",
+      "destination": "/api/$1"
     },
     {
-      "src": "/(.*)",
-      "dest": "/public/$1"
+      "source": "/((?!api/).+)",
+      "destination": "/public/$1"
     }
   ]
 }
