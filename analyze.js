@@ -1,6 +1,6 @@
-import Anthropic from "@anthropic-ai/sdk";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const client = new Anthropic();
+const client = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
 
 const PALM_READING_PROMPT = `あなたは、東洋と西洋の両方の手相術（パーム・リーディング）に精通した、世界最高峰の熟練手相鑑定士です。
 提供された手のひらの画像を細部まで「識別」し、論理的な「判断」を行ってください。
@@ -71,30 +71,23 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "JPEG、PNG、WebP形式の画像をアップロードしてください" });
     }
 
-    const response = await client.messages.create({
-      model: "claude-opus-4-7",
-      max_tokens: 2048,
-      system: [
-        {
-          type: "text",
-          text: PALM_READING_PROMPT,
-          cache_control: { type: "ephemeral" },
-        },
-      ],
-      messages: [
+    const model = client.getGenerativeModel({
+      model: "gemini-2.0-flash",
+      systemInstruction: PALM_READING_PROMPT,
+    });
+
+    const response = await model.generateContent({
+      contents: [
         {
           role: "user",
-          content: [
+          parts: [
             {
-              type: "image",
-              source: {
-                type: "base64",
-                media_type: mediaType,
+              inlineData: {
+                mimeType: mediaType,
                 data: imageData,
               },
             },
             {
-              type: "text",
               text: "この手のひらを鑑定してください。",
             },
           ],
@@ -102,14 +95,14 @@ export default async function handler(req, res) {
       ],
     });
 
-    const textContent = response.content.find((b) => b.type === "text");
+    const textContent = response.response.text();
     if (!textContent) {
       return res.status(500).json({ error: "鑑定結果を取得できませんでした" });
     }
 
     let result;
     try {
-      const raw = textContent.text.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
+      const raw = textContent.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
       result = JSON.parse(raw);
     } catch {
       return res.status(500).json({ error: "鑑定結果の解析に失敗しました" });
@@ -118,9 +111,6 @@ export default async function handler(req, res) {
     res.json(result);
   } catch (err) {
     console.error("Error:", err);
-    if (err instanceof Anthropic.APIError) {
-      return res.status(err.status || 500).json({ error: `APIエラー: ${err.message}` });
-    }
     res.status(500).json({ error: "サーバーエラーが発生しました" });
   }
 }
