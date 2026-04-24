@@ -1,0 +1,9 @@
+{
+  "name": "palm-reader",
+  "version": "1.0.0",
+  "description": "AI手相占いウェブアプリ",
+  "type": "module",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.51.0"
+  }
+}
