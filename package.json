@@ -1,9 +1,7 @@
 {
-  "name": "palm-reader",
-  "version": "1.0.0",
-  "description": "AI手相占いウェブアプリ",
-  "type": "module",
-  "dependencies": {
-    "@google/generative-ai": "^0.21.0"
+  "functions": {
+    "api/*.js": {
+      "maxDuration": 30
+    }
   }
 }
